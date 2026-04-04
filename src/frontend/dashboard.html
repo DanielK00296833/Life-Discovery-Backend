@@ -2,53 +2,46 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <title>Dashboard - Life Discovery</title>
+  <link rel="stylesheet" href="assests/css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h2>Dashboard</h2>
-    <p id="welcome"></p>
-    <pre id="userData"></pre>
-    <button id="logoutBtn">Logout</button>
-  </div>
+  <header>
+    <nav>
+      <div class="nav-container">
+        <h1>Life Discovery</h1>
+        <div class="nav-links">
+          <a href="#careers">Careers</a>
+          <a href="#favourites">My Favourites</a>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </div>
+    </nav>
+  </header>
 
-  <script>
-    const token = localStorage.getItem("token");
+  <main>
+    <div class="container">
+      <section id="welcome-section">
+        <h2>Dashboard</h2>
+        <p id="welcome"></p>
+      </section>
 
-    if (!token) {
-      window.location.href = "login.html";
-    }
+      <section id="careers-section">
+        <h3>Explore Careers</h3>
+        <div id="careers-list" class="careers-grid">
+          <!-- Careers will be loaded here -->
+        </div>
+      </section>
 
-    document.getElementById("welcome").textContent = `Welcome, ${localStorage.getItem("userName") || "User"}`;
+      <section id="favourites-section">
+        <h3>My Favourite Careers</h3>
+        <div id="favourites-list" class="careers-grid">
+          <!-- Favourites will be loaded here -->
+        </div>
+      </section>
+    </div>
+  </main>
 
-    async function loadUser() {
-      const response = await fetch("http://localhost/Life-Discovery-Backend/api/auth/me.php", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userName");
-        window.location.href = "login.html";
-        return;
-      }
-
-      document.getElementById("userData").textContent = JSON.stringify(data.user, null, 2);
-    }
-
-    document.getElementById("logoutBtn").addEventListener("click", function() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userName");
-      window.location.href = "login.html";
-    });
-
-    loadUser();
-  </script>
+  <script src="assests/js/dashboard.js"></script>
 </body>
 </html>
