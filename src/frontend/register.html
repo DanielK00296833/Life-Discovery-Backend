@@ -2,20 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register</title>
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <title>Register - Life Discovery</title>
+  <link rel="stylesheet" href="assests/css/style.css" />
 </head>
-<body>
-  <div class="container">
-    <h2>Register</h2>
-    <form id="registerForm">
-      <input type="text" id="name" placeholder="Name" required />
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Register</button>
+<body class="auth-page">
+  <div class="auth-card">
+    <p class="auth-brand">Life Discovery</p>
+    <h2>Create your account</h2>
+    <p class="auth-subtitle">Join to browse career paths and get you're life started !</p>
+
+    <form id="registerForm" class="auth-form">
+      <div class="form-group">
+        <label for="name">Full name</label>
+        <input type="text" id="name" placeholder="Enter your name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Create a password" required />
+      </div>
+
+      <button type="submit" class="auth-btn">Register</button>
     </form>
-    <p id="message"></p>
-    <a href="login.html">Already have an account?</a>
+
+    <p id="message" class="auth-message"></p>
+    <p class="auth-link-text">
+      Already have an account?
+      <a href="login.html" class="auth-link">Log in</a>
+    </p>
   </div>
 
   <script>

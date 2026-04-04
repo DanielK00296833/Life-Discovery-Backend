@@ -11,8 +11,8 @@
       <div class="nav-container">
         <h1>Life Discovery</h1>
         <div class="nav-links">
-          <a href="#careers">Careers</a>
-          <a href="#favourites">My Favourites</a>
+          <a href="#careers-section">Careers</a>
+          <a href="#favourites-section">My Favourites</a>
           <button id="logoutBtn">Logout</button>
         </div>
       </div>
@@ -28,9 +28,17 @@
 
       <section id="careers-section">
         <h3>Explore Careers</h3>
+        <div class="careers-toolbar">
+          <div class="category-filter-wrap">
+            <label for="category-filter">Filter by category</label>
+            <select id="category-filter"></select>
+          </div>
+          <div id="pagination-info" class="pagination-info"></div>
+        </div>
         <div id="careers-list" class="careers-grid">
           <!-- Careers will be loaded here -->
         </div>
+        <div id="careers-pagination" class="careers-pagination"></div>
       </section>
 
       <section id="favourites-section">

@@ -1,4 +1,9 @@
 const token = localStorage.getItem("token");
+let favouriteCareerIds = new Set();
+let allCareers = [];
+let activeCategory = "all";
+let currentPage = 1;
+const careersPerPage = 6;
 
 if (!token) {
     window.location.href = "login.html";
@@ -7,8 +12,7 @@ if (!token) {
 document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("welcome").textContent = `Welcome, ${localStorage.getItem("userName") || "User"}!`;
 
-    loadCareers();
-    loadFavourites();
+    refreshDashboard();
 
     document.getElementById("logoutBtn").addEventListener("click", function() {
         localStorage.removeItem("token");
@@ -17,36 +21,135 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+async function refreshDashboard() {
+    await loadFavourites();
+    await loadCareers();
+}
+
 async function loadCareers() {
     try {
         const response = await fetch("http://localhost/Life-Discovery-Backend/api/careers.php");
-        const careers = await response.json();
+        allCareers = await response.json();
 
-        const careersList = document.getElementById("careers-list");
-        careersList.innerHTML = "";
-
-        careers.forEach(career => {
-            const careerCard = document.createElement("div");
-            careerCard.className = "career-card";
-            careerCard.innerHTML = `
-                <h4>${career.title}</h4>
-                <p>${career.description || "No description available."}</p>
-                <button class="fav-btn" data-career-id="${career.id}">Save to Favourites</button>
-            `;
-            careersList.appendChild(careerCard);
-        });
-
-        // Add event listeners to fav buttons
-        document.querySelectorAll(".fav-btn").forEach(btn => {
-            btn.addEventListener("click", async function() {
-                const careerId = this.getAttribute("data-career-id");
-                await addToFavourites(careerId, this);
-            });
-        });
+        renderCategoryDropdown();
+        renderCareers();
     } catch (error) {
         console.error("Error loading careers:", error);
         document.getElementById("careers-list").innerHTML = "<p>Failed to load careers.</p>";
     }
+}
+
+function renderCategoryDropdown() {
+    const categoryFilter = document.getElementById("category-filter");
+    const categories = ["all", ...new Set(allCareers.map(career => career.category).filter(Boolean))];
+
+    categoryFilter.innerHTML = categories.map(category => `
+        <option value="${category}" ${category === activeCategory ? "selected" : ""}>
+            ${formatCategoryLabel(category)}
+        </option>
+    `).join("");
+
+    categoryFilter.onchange = function() {
+        activeCategory = this.value;
+        currentPage = 1;
+        renderCareers();
+    };
+}
+
+function renderCareers() {
+    const careersList = document.getElementById("careers-list");
+    const filteredCareers = activeCategory === "all"
+        ? allCareers
+        : allCareers.filter(career => career.category === activeCategory);
+    const totalPages = Math.max(1, Math.ceil(filteredCareers.length / careersPerPage));
+
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+
+    const startIndex = (currentPage - 1) * careersPerPage;
+    const visibleCareers = filteredCareers.slice(startIndex, startIndex + careersPerPage);
+
+    careersList.innerHTML = "";
+    renderPagination(filteredCareers.length, totalPages);
+
+    if (visibleCareers.length === 0) {
+        careersList.innerHTML = "<p>No careers found in this category yet.</p>";
+        return;
+    }
+
+    visibleCareers.forEach(career => {
+        const isFavourite = favouriteCareerIds.has(String(career.id));
+        const careerCard = document.createElement("div");
+        careerCard.className = "career-card";
+        careerCard.innerHTML = `
+            <span class="career-category">${formatCategoryLabel(career.category)}</span>
+            <h4>${career.name}</h4>
+            <p>${career.short_description || "No description available."}</p>
+            <p class="career-meta"><strong>Education:</strong> ${career.education_required || "Flexible"}</p>
+            <p class="career-meta"><strong>Time to start:</strong> ${career.time_to_start || "Varies"}</p>
+            <button class="fav-btn ${isFavourite ? "favourited" : ""}" data-career-id="${career.id}" data-is-favourite="${isFavourite}">
+                ${isFavourite ? "Saved" : "Save to Favourites"}
+            </button>
+        `;
+        careersList.appendChild(careerCard);
+    });
+
+    careersList.querySelectorAll(".fav-btn").forEach(btn => {
+        btn.addEventListener("click", async function() {
+            const careerId = this.getAttribute("data-career-id");
+            const isFavourite = this.getAttribute("data-is-favourite") === "true";
+
+            if (isFavourite) {
+                await removeFromFavourites(careerId);
+            } else {
+                await addToFavourites(careerId);
+            }
+        });
+    });
+}
+
+function renderPagination(totalCareers, totalPages) {
+    const paginationInfo = document.getElementById("pagination-info");
+    const paginationContainer = document.getElementById("careers-pagination");
+
+    if (totalCareers === 0) {
+        paginationInfo.textContent = "";
+        paginationContainer.innerHTML = "";
+        return;
+    }
+
+    paginationInfo.textContent = `Showing page ${currentPage} of ${totalPages} (${totalCareers} careers)`;
+    paginationContainer.innerHTML = `
+        <button type="button" id="prev-page" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+        <span class="page-count">Page ${currentPage} of ${totalPages}</span>
+        <button type="button" id="next-page" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
+    `;
+
+    document.getElementById("prev-page").addEventListener("click", function() {
+        if (currentPage > 1) {
+            currentPage -= 1;
+            renderCareers();
+        }
+    });
+
+    document.getElementById("next-page").addEventListener("click", function() {
+        if (currentPage < totalPages) {
+            currentPage += 1;
+            renderCareers();
+        }
+    });
+}
+
+function formatCategoryLabel(category) {
+    if (!category) {
+        return "General";
+    }
+
+    return category
+        .split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 }
 
 async function loadFavourites() {
@@ -60,6 +163,8 @@ async function loadFavourites() {
         const data = await response.json();
 
         if (data.success) {
+            favouriteCareerIds = new Set(data.favourites.map(career => String(career.id)));
+
             const favouritesList = document.getElementById("favourites-list");
             favouritesList.innerHTML = "";
 
@@ -72,22 +177,34 @@ async function loadFavourites() {
                 const careerCard = document.createElement("div");
                 careerCard.className = "career-card";
                 careerCard.innerHTML = `
-                    <h4>${career.title}</h4>
-                    <p>${career.description || "No description available."}</p>
-                    <button class="fav-btn favourited" disabled>Saved</button>
+                    <span class="career-category">${formatCategoryLabel(career.category)}</span>
+                    <h4>${career.name}</h4>
+                    <p>${career.short_description || "No description available."}</p>
+                    <p class="career-meta"><strong>Education:</strong> ${career.education_required || "Flexible"}</p>
+                    <p class="career-meta"><strong>Time to start:</strong> ${career.time_to_start || "Varies"}</p>
+                    <button class="fav-btn favourited" data-career-id="${career.id}">Unsave</button>
                 `;
                 favouritesList.appendChild(careerCard);
             });
+
+            favouritesList.querySelectorAll(".fav-btn").forEach(btn => {
+                btn.addEventListener("click", async function() {
+                    const careerId = this.getAttribute("data-career-id");
+                    await removeFromFavourites(careerId);
+                });
+            });
         } else {
+            favouriteCareerIds = new Set();
             document.getElementById("favourites-list").innerHTML = "<p>Failed to load favourites.</p>";
         }
     } catch (error) {
+        favouriteCareerIds = new Set();
         console.error("Error loading favourites:", error);
         document.getElementById("favourites-list").innerHTML = "<p>Failed to load favourites.</p>";
     }
 }
 
-async function addToFavourites(careerId, button) {
+async function addToFavourites(careerId) {
     try {
         const response = await fetch("http://localhost/Life-Discovery-Backend/api/favourites.php", {
             method: "POST",
@@ -100,16 +217,35 @@ async function addToFavourites(careerId, button) {
         const data = await response.json();
 
         if (data.success) {
-            button.textContent = "Saved";
-            button.classList.add("favourited");
-            button.disabled = true;
-            // Reload favourites
-            loadFavourites();
+            await refreshDashboard();
         } else {
             alert("Failed to add to favourites: " + (data.error || "Unknown error"));
         }
     } catch (error) {
         console.error("Error adding to favourites:", error);
         alert("Failed to add to favourites.");
+    }
+}
+
+async function removeFromFavourites(careerId) {
+    try {
+        const response = await fetch("http://localhost/Life-Discovery-Backend/api/favourites.php", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ career_id: careerId })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            await refreshDashboard();
+        } else {
+            alert("Failed to remove from favourites: " + (data.error || "Unknown error"));
+        }
+    } catch (error) {
+        console.error("Error removing from favourites:", error);
+        alert("Failed to remove from favourites.");
     }
 }

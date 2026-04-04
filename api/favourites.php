@@ -23,7 +23,7 @@ if ($method === 'GET') {
             INNER JOIN user_favourites uf ON c.id = uf.career_id
             WHERE uf.user_id = :user_id
         ");
-        $stmt->execute(['user_id' => $user['id']]);
+        $stmt->execute(['user_id' => $user->sub]);
         $favourites = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['success' => true, 'favourites' => $favourites]);
     } catch (PDOException $e) {
@@ -44,7 +44,7 @@ if ($method === 'GET') {
     try {
         // Check if already favourited
         $stmt = $pdo->prepare("SELECT id FROM user_favourites WHERE user_id = :user_id AND career_id = :career_id");
-        $stmt->execute(['user_id' => $user['id'], 'career_id' => $career_id]);
+        $stmt->execute(['user_id' => $user->sub, 'career_id' => $career_id]);
         if ($stmt->fetch()) {
             echo json_encode(['success' => true, 'message' => 'Already in favourites']);
             exit;
@@ -52,11 +52,30 @@ if ($method === 'GET') {
 
         // Add to favourites
         $stmt = $pdo->prepare("INSERT INTO user_favourites (user_id, career_id) VALUES (:user_id, :career_id)");
-        $stmt->execute(['user_id' => $user['id'], 'career_id' => $career_id]);
+        $stmt->execute(['user_id' => $user->sub, 'career_id' => $career_id]);
         echo json_encode(['success' => true, 'message' => 'Added to favourites']);
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to add favourite', 'message' => $e->getMessage()]);
+    }
+} elseif ($method === 'DELETE') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $career_id = $data['career_id'] ?? null;
+
+    if (!$career_id) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Career ID required']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("DELETE FROM user_favourites WHERE user_id = :user_id AND career_id = :career_id");
+        $stmt->execute(['user_id' => $user->sub, 'career_id' => $career_id]);
+
+        echo json_encode(['success' => true, 'message' => 'Removed from favourites']);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to remove favourite', 'message' => $e->getMessage()]);
     }
 } else {
     http_response_code(405);
