@@ -22,8 +22,49 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function refreshDashboard() {
+    await loadLatestQuizResult();
     await loadFavourites();
     await loadCareers();
+}
+
+async function loadLatestQuizResult() {
+    const resultContainer = document.getElementById("latest-quiz-result");
+
+    try {
+        const response = await fetch("http://localhost/Life-Discovery-Backend/api/quiz/latest.php", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        const data = await response.json();
+
+        if (!data.success || !data.result) {
+            resultContainer.innerHTML = `
+                <p>You have not taken the quiz yet.</p>
+                <a href="quiz.html" class="quiz-summary-btn">Take Quiz</a>
+            `;
+            return;
+        }
+
+        resultContainer.innerHTML = `
+            <span class="career-category">${formatCategoryLabel(data.result.top_category)}</span>
+            <p class="quiz-summary-text">
+                Your latest result suggests <strong>${formatCategoryLabel(data.result.top_category)}</strong> careers may be a strong fit.
+            </p>
+            ${renderTopCategoryMatches(data.result.scores)}
+            <p class="quiz-summary-text">
+                Suggested careers: ${data.result.recommended_careers.map(career => career.name).join(", ") || "More careers coming soon."}
+            </p>
+            <a href="quiz.html" class="quiz-summary-btn">Retake Quiz</a>
+        `;
+    } catch (error) {
+        console.error("Error loading latest quiz result:", error);
+        resultContainer.innerHTML = `
+            <p>Failed to load your quiz result.</p>
+            <a href="quiz.html" class="quiz-summary-btn">Retake Quiz</a>
+        `;
+    }
 }
 
 async function loadCareers() {
@@ -150,6 +191,39 @@ function formatCategoryLabel(category) {
         .split("-")
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
+}
+
+function renderTopCategoryMatches(scores) {
+    const scoreEntries = Object.entries(scores || {});
+    const totalScore = scoreEntries.reduce((sum, [, score]) => sum + Number(score), 0);
+
+    if (totalScore === 0) {
+        return "";
+    }
+
+    return `
+        <div class="match-breakdown">
+            ${scoreEntries
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .slice(0, 3)
+                .map(([category, score]) => {
+                    const percentage = Math.round((Number(score) / totalScore) * 100);
+
+                    return `
+                        <div class="match-row">
+                            <div class="match-row-top">
+                                <span>${formatCategoryLabel(category)}</span>
+                                <strong>${percentage}%</strong>
+                            </div>
+                            <div class="match-bar">
+                                <div class="match-bar-fill" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                })
+                .join("")}
+        </div>
+    `;
 }
 
 async function loadFavourites() {
