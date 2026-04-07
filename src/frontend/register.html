@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register - Life Discovery</title>
+  <link rel="stylesheet" href="assests/css/style.css" />
+</head>
+<body class="auth-page">
+  <div class="auth-card">
+    <p class="auth-brand">Life Discovery</p>
+    <h2>Create your account</h2>
+    <p class="auth-subtitle">Join to browse career paths and get you're life started !</p>
+
+    <form id="registerForm" class="auth-form">
+      <div class="form-group">
+        <label for="name">Full name</label>
+        <input type="text" id="name" placeholder="Enter your name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Create a password" required />
+      </div>
+
+      <button type="submit" class="auth-btn">Register</button>
+    </form>
+
+    <p id="message" class="auth-message"></p>
+    <p class="auth-link-text">
+      Already have an account?
+      <a href="login.html" class="auth-link">Log in</a>
+    </p>
+  </div>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const response = await fetch("http://localhost/Life-Discovery-Backend/api/auth/register.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: document.getElementById("name").value,
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value
+        })
+      });
+
+      const data = await response.json();
+      document.getElementById("message").textContent = data.message;
+
+      if (data.success) {
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>

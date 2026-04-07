@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard - Life Discovery</title>
+  <link rel="stylesheet" href="assests/css/style.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="nav-container">
+        <h1>Life Discovery</h1>
+        <div class="nav-links">
+          <a href="quiz.html">Quiz</a>
+          <a href="#careers-section">Careers</a>
+          <a href="#favourites-section">My Favourites</a>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <section id="welcome-section">
+        <h2>Dashboard</h2>
+        <p id="welcome"></p>
+      </section>
+
+      <section id="quiz-summary-section">
+        <h3>Your Latest Quiz Match</h3>
+        <div id="latest-quiz-result" class="quiz-summary-card"></div>
+      </section>
+
+      <section id="careers-section">
+        <h3>Explore Careers</h3>
+        <div class="careers-toolbar">
+          <div class="category-filter-wrap">
+            <label for="category-filter">Filter by category</label>
+            <select id="category-filter"></select>
+          </div>
+          <div id="pagination-info" class="pagination-info"></div>
+        </div>
+        <div id="careers-list" class="careers-grid">
+          <!-- Careers will be loaded here -->
+        </div>
+        <div id="careers-pagination" class="careers-pagination"></div>
+      </section>
+
+      <section id="favourites-section">
+        <h3>My Favourite Careers</h3>
+        <div id="favourites-list" class="careers-grid">
+          <!-- Favourites will be loaded here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="assests/js/dashboard.js"></script>
+</body>
+</html>

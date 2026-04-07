@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - Life Discovery</title>
+  <link rel="stylesheet" href="assests/css/style.css" />
+</head>
+<body class="auth-page">
+  <div class="auth-card">
+    <p class="auth-brand">Life Discovery</p>
+    <h2>Welcome back</h2>
+    <p class="auth-subtitle">Log in to continue exploring and saving careers.</p>
+
+    <form id="loginForm" class="auth-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required />
+      </div>
+
+      <button type="submit" class="auth-btn">Login</button>
+    </form>
+
+    <p id="message" class="auth-message"></p>
+    <p class="auth-link-text">
+      Don't have an account?
+      <a href="register.html" class="auth-link">Create one</a>
+    </p>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const response = await fetch("http://localhost/Life-Discovery-Backend/api/auth/login.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userName", data.user.name);
+        window.location.href = "dashboard.html";
+      } else {
+        document.getElementById("message").textContent = data.message;
+      }
+    });
+  </script>
+</body>
+</html>
