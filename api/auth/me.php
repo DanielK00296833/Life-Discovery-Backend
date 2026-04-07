@@ -3,10 +3,13 @@
 require_once __DIR__ . '/../../src/Middleware/AuthMiddleware.php';
 require_once __DIR__ . '/../../src/Helpers/Response.php';
 
-$user = AuthMiddleware::authenticate();
+$payload = AuthMiddleware::authenticate();
 
 Response::json([
     'success' => true,
-    'message' => 'Authenticated user',
-    'user' => $user
+    'user' => [
+        'id' => $payload->sub,
+        'email' => $payload->email,
+        'name' => $payload->name
+    ]
 ]);
